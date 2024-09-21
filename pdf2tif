@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: Copyright (c) 2024 Max Musterman
+# SPDX-License-Identifier: MIT
+
+# Name        : pdf2tif
+# Version     : 0.1.0
+# Description : Convert pdf to tif
+# Required    : imagemagick
+# Note        : -
+
+#==========#
+#== INIT ==#
+#==========#
+_VERSION='0.1.0'
+_SCRIPT_NAME=$(basename "$0")
+_density='300x300'
+
+
+
+_SETUP_MAGICK_CONVERT="\
+-quality 90 \
+-background white \
+-alpha background \
+-compress zip"
+
+
+#===============#
+#== FUNCTIONS ==#
+#===============#
+# :Std. error message
+_error_msg() {
+  echo "$_SCRIPT_NAME: $1" >&2
+  exit 1
+}
+
+#--------------#
+
+# :Std. message
+_msg() {
+  echo "$_SCRIPT_NAME: $1" >&2
+  exit 0
+}
+
+#--------------#
+
+# :Help text
+_printhelp() {
+cat <<-EOM
+foobar -- a foo toolbox
+Usage: foobar COMMANDS FILE
+Does Foo to bar
+
+Requirements:
+  - sweets and love
+
+Example of usage:
+  foobar --help
+
+Options:
+ -h   --help                print help message and exit
+ -d   --density NUMxNUM     density of the pixels per inch, default 300x300
+
+NOTE: none 
+EOM
+exit 0
+}
+
+#---------------#
+
+# :Reads the input arguments
+_argument_parser() {
+  while [[ -n "$1" ]]; do
+    case $1 in
+      -d  | --density ) _density=$2; shift 2 ;;
+      -h  | --help    ) _printhelp ;;
+            --version ) _msg "Version $_VERSION" ;;
+      --              ) shift; break ;;
+      -*              ) _error_msg "Unknown option $1"; shift ;;
+      *               ) break ;;
+    esac
+  done
+
+#-- user input
+
+_set_input $1
+_output=$2
+
+}
+
+#---------------#
+
+# :Main function pdf2tif
+_pdf2tif() {
+  _set_magick_input
+  magick $_setup_magick_input $_input $_SETUP_MAGICK_CONVERT $_output
+}
+
+# :Set magick input settings
+_set_magick_input() {
+  _setup_magick_input="\
+  -density $_density
+  "
+}
+# :Set input
+_set_input() {
+	local input="$1"
+	local extension="pdf"
+	local input_extension=`echo ${input##*.} | tr '[:upper:]' '[:lower:]'`
+    
+    if [[ ! -f $input || "$input_extension" != "$extension" ]] ; then
+        _error_msg "$input must be an existing $extension with the $extension extension."
+    else
+        _input=$1
+    fi
+}
+
+#==========#
+#== MAIN ==#
+#==========#
+trap '_error_msg "Execution aborted."' 1 2 3 9 15
+_argument_parser $@
+_pdf2tif
